@@ -70,7 +70,7 @@ export class MatchingEngine {
         score_data.resume_domain = resume_doc.domain_info;
 
         const result = new MatchResult(score_data);
-        
+
         // Live verify courses
         result.course_recommendations = await this.course_recommender.get_verified_recommendations(result);
 
@@ -79,5 +79,43 @@ export class MatchingEngine {
         resume_doc.analysis_results[jd_doc.id] = result;
 
         return result;
+    }
+
+    async analyze_all(jd_docs, resume_docs) {
+        const jdList = Array.isArray(jd_docs) ? jd_docs : [jd_docs].filter(Boolean);
+        const resumeList = Array.isArray(resume_docs) ? resume_docs : [resume_docs].filter(Boolean);
+
+        if (!jdList.length || !resumeList.length) {
+            return { comparisons: [], best: null, rankings: [] };
+        }
+
+        const comparisons = [];
+        for (const jd of jdList) {
+            for (const resume of resumeList) {
+                const result = await this.analyze_pair(jd, resume);
+                comparisons.push({ jd, resume, result });
+            }
+        }
+
+        comparisons.sort((a, b) => (b.result.overall_score || 0) - (a.result.overall_score || 0));
+
+        const best = comparisons[0] || null;
+        const ranking_by_jd = [];
+        for (const jd of jdList) {
+            const jdMatches = comparisons
+                .filter(item => item.jd.id === jd.id)
+                .sort((a, b) => (b.result.overall_score || 0) - (a.result.overall_score || 0));
+            ranking_by_jd.push({ jd: jd.filename, matches: jdMatches.map(item => ({ resume: item.resume.filename, score: item.result.overall_score, domain_compatibility: item.result.domain_compatibility })) });
+        }
+
+        const ranking_by_resume = [];
+        for (const resume of resumeList) {
+            const resumeMatches = comparisons
+                .filter(item => item.resume.id === resume.id)
+                .sort((a, b) => (b.result.overall_score || 0) - (a.result.overall_score || 0));
+            ranking_by_resume.push({ resume: resume.filename, matches: resumeMatches.map(item => ({ jd: item.jd.filename, score: item.result.overall_score, domain_compatibility: item.result.domain_compatibility })) });
+        }
+
+        return { comparisons, best, rankings: { by_jd: ranking_by_jd, by_resume: ranking_by_resume } };
     }
 }

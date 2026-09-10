@@ -4,6 +4,7 @@ import { LLMClient, clear_extraction_cache } from '../src/llm.js';
 import { MatchingEngine } from '../src/matcher.js';
 import { Session } from '../src/session.js';
 import { parse_file } from '../src/parser.js';
+import { format_single_analysis } from '../src/output.js';
 import { set_network_enabled, UNVERIFIED_DISCLAIMER } from '../src/courses.js';
 import { jest } from '@jest/globals';
 
@@ -30,6 +31,35 @@ describe('CareerLens AI Matching Engine', () => {
     beforeEach(() => {
         clear_extraction_cache();
         session = new Session();
+    });
+
+    test('Output is plain text without emojis or markdown decorations', () => {
+        const formatted = format_single_analysis(
+            { filename: 'JD.txt' },
+            { filename: 'Resume.pdf' },
+            {
+                overall_score: 94,
+                domain_compatibility: 'match',
+                enlightenment: 'The resume is a strong fit for the role.',
+                required_skills_score: 100,
+                experience_score: 85,
+                domain_alignment_score: 95,
+                seniority_score: 90,
+                education_score: 100,
+                projects_score: 95,
+                return_path: 'Keep building proof and target junior full-stack roles.',
+                action_plan: 'Improve the resume and add one end-to-end project.'
+            }
+        );
+
+        expect(formatted).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
+        expect(formatted).not.toMatch(/^#/m);
+        expect(formatted).not.toContain('**');
+        expect(formatted).not.toContain('|');
+    });
+
+    test('Groq provider uses a supported model', () => {
+        expect(llm.models[0]).toMatch(/qwen\/qwen3\.8-27b|qwen\/qwen3\.6-27b|openai\/gpt-oss-20b|openai\/gpt-oss-120b|groq\/compound/);
     });
 
     test('Test 01 - Perfect Match', async () => {
@@ -86,24 +116,31 @@ describe('CareerLens AI Matching Engine', () => {
 
     test('Test 27 - Rate Limit Handling (Mocked 429)', async () => {
         const mockLlm = new LLMClient();
-        
-        // Mock the create method to throw 429
+
         jest.spyOn(mockLlm.client.chat.completions, 'create').mockImplementation(() => {
             const err = new Error('Rate limit exceeded');
             err.status = 429;
             throw err;
         });
 
-        const start = Date.now();
-        try {
-            // maxRetries=1 just to keep test fast
-            await mockLlm._callWithRetry({ messages: [] }, 1);
-            fail('Should have thrown error after exhausting retries');
-        } catch (error) {
-            const duration = (Date.now() - start) / 1000;
-            expect(error.status).toBe(429);
-            // It should have waited at least 2 seconds (Math.pow(2, 1) * 1000)
-            expect(duration).toBeGreaterThanOrEqual(1.5);
-        }
+        const result = await mockLlm._call('Test prompt', 'Test system', 0.1, true);
+
+        expect(typeof result).toBe('string');
+        expect(result).toContain('fallback');
+        expect(result).toContain('rate limit');
+    });
+
+    test('Timeouts fall back to offline mode instead of hanging', async () => {
+        const mockLlm = new LLMClient();
+        mockLlm.provider = 'groq';
+        mockLlm.apiKey = 'fake-key';
+
+        jest.spyOn(mockLlm.client.chat.completions, 'create').mockImplementation(() => new Promise(() => {}));
+
+        const result = await mockLlm._call('Delayed test prompt', 'Test system', 0.1, true, 120);
+
+        expect(typeof result).toBe('string');
+        expect(result).toContain('fallback');
+        expect(result).toContain('timed out');
     });
 });

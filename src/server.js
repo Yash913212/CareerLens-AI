@@ -76,7 +76,7 @@ app.post('/api/analyze', upload.fields([{ name: 'jd', maxCount: 1 }, { name: 're
         // Check for Groq Rate Limit exhaustion (429)
         if (err.status === 429 || (err.message && err.message.includes('429'))) {
             return res.status(503).json({
-                error: '⏳ I\'m handling a lot of requests right now. Please try /analyze again in a minute.'
+                error: 'I\'m handling a lot of requests right now. Please try /analyze again in a minute.'
             });
         }
         res.status(500).json({ error: err.message || 'Internal Server Error' });
@@ -93,7 +93,7 @@ app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(413).json({
-                error: '❌ File too large.\n\nPlease upload a document under 5MB.'
+                error: 'File too large.\n\nPlease upload a document under 5MB.'
             });
         }
     }

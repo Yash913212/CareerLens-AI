@@ -1,105 +1,89 @@
 export function format_single_analysis(jd_doc, resume_doc, result) {
     const lines = [];
-    
-    // Header
-    lines.push(`# CareerLens AI Analysis`);
-    lines.push(`**JD**: ${jd_doc.filename} | **Resume**: ${resume_doc.filename}`);
-    lines.push(`---`);
-    lines.push("");
 
-    // 1. Overall Match & Domain Check
-    lines.push(`## 1. Overall Match: ${result.overall_score}/100`);
-    if (result.domain_compatibility === "mismatch") {
-        lines.push(`> 🛑 **CRITICAL DOMAIN MISMATCH**`);
-        lines.push(`> The candidate's background (${result.resume_domain?.domain || "Unknown"}) is fundamentally incompatible with the required domain (${result.jd_domain?.domain || "Unknown"}).`);
-    } else if (result.domain_compatibility === "partial") {
-        lines.push(`> ⚠️ **PARTIAL DOMAIN MATCH**`);
-        lines.push(`> The candidate's background is related but not a perfect match for the required domain.`);
+    const skillLabel = result.domain_compatibility === 'mismatch'
+        ? 'Weak fit'
+        : result.domain_compatibility === 'partial'
+            ? 'Partial fit'
+            : 'Strong fit';
+
+    lines.push('Resume vs JD Analysis');
+    lines.push(`ATS Score: ${result.overall_score}/100`);
+    lines.push(`Skill Match: ${skillLabel}`);
+    lines.push(`Return Path: ${result.return_path || 'No clear path provided.'}`);
+    lines.push('');
+
+    lines.push('Enlightenment:');
+    lines.push(result.enlightenment || 'No explanation provided.');
+    lines.push('');
+
+    lines.push('What the resume does well:');
+    const strengths = Array.isArray(result.strengths) && result.strengths.length > 0
+        ? result.strengths.slice(0, 4)
+        : ['Relevant experience and domain signal are present.'];
+    lines.push(...strengths.map(item => `- ${item}`));
+    lines.push('');
+
+    lines.push('What is missing:');
+    const missing = [
+        ...(Array.isArray(result.missing_critical) ? result.missing_critical : []).map(item => `${typeof item === 'object' ? item.skill : item} - Critical`),
+        ...(Array.isArray(result.missing_important) ? result.missing_important : []).map(item => `${typeof item === 'object' ? item.skill : item} - Important`),
+        ...(Array.isArray(result.missing_optional) ? result.missing_optional : []).map(item => `${typeof item === 'object' ? item.skill : item} - Optional`)
+    ];
+    if (missing.length > 0) {
+        lines.push(...missing.slice(0, 8));
     } else {
-        lines.push(`> ✅ **DOMAIN ALIGNED**`);
+        lines.push('No major gaps identified.');
     }
-    lines.push("");
+    lines.push('');
 
-    // 2. The Enlightenment (Why)
-    lines.push(`## 2. The Enlightenment (Why this score?)`);
-    lines.push(result.enlightenment || "No explanation provided.");
-    lines.push("");
+    lines.push('What you have to do:');
+    const actionText = result.action_plan || 'No action plan provided.';
+    lines.push(actionText);
+    lines.push('');
 
-    // 3. Score Breakdown
-    lines.push(`## 3. Score Breakdown`);
-    lines.push(`| Category | Score |`);
-    lines.push(`| :--- | :--- |`);
-    lines.push(`| Required Skills | ${result.required_skills_score}/100 |`);
-    lines.push(`| Experience | ${result.experience_score}/100 |`);
-    lines.push(`| Domain Alignment | ${result.domain_alignment_score}/100 |`);
-    lines.push(`| Seniority | ${result.seniority_score}/100 |`);
-    lines.push(`| Education & Certs | ${result.education_score}/100 |`);
-    lines.push(`| Projects | ${result.projects_score}/100 |`);
-    lines.push("");
-
-    // 4. Return Path (Direction)
-    lines.push(`## 4. Return Path`);
-    lines.push(result.return_path || "No direction provided.");
-    lines.push("");
-
-    // 5. Action Plan
-    lines.push(`## 5. Action Plan`);
-    lines.push(result.action_plan || "No specific action plan generated.");
-    lines.push("");
-
-    // 6. Recommended Courses
-    if (result.course_recommendations && result.course_recommendations.length > 0 && result.domain_compatibility !== "mismatch") {
-        lines.push(`## 📚 Recommended Courses`);
-        lines.push("");
-
-        const any_network_unavailable = result.course_recommendations.some(c => c.network_unavailable);
-        if (any_network_unavailable) {
-            lines.push(`> ⚠️ Course verification is unavailable in this session. The following are unverified suggestions and may not be fully accurate.`);
-            lines.push("");
+    lines.push('Recommended courses:');
+    if (Array.isArray(result.course_recommendations) && result.course_recommendations.length > 0) {
+        for (const course of result.course_recommendations.slice(0, 4)) {
+            const name = course.course_name || 'Course';
+            const platform = course.platform || 'Platform';
+            const reason = course.reasoning ? ` - ${course.reasoning}` : '';
+            lines.push(`- ${name} (${platform})${reason}`);
         }
+    } else {
+        lines.push('No course recommendations for this profile at the moment.');
+    }
+    lines.push('');
 
-        const verified = result.course_recommendations.filter(c => c.verified);
-        const unverified = result.course_recommendations.filter(c => !c.verified);
+    lines.push('Score breakdown:');
+    lines.push(`Required Skills: ${result.required_skills_score}/100`);
+    lines.push(`Experience: ${result.experience_score}/100`);
+    lines.push(`Domain Alignment: ${result.domain_alignment_score}/100`);
+    lines.push(`Seniority: ${result.seniority_score}/100`);
+    lines.push(`Education & Certs: ${result.education_score}/100`);
+    lines.push(`Projects: ${result.projects_score}/100`);
+    lines.push('');
+    lines.push('This is an AI-estimated compatibility score, not an actual employer ATS score.');
 
-        if (verified.length > 0) {
-            lines.push(`### ✅ Verified`);
-            for (const course of verified) {
-                const name = course.course_name || "Unknown Course";
-                const platform = course.platform || "Unknown";
-                const url = course.url || "";
-                const skill = course.skill || "";
-                const reasoning = course.reasoning || "";
+    return lines.join('\n');
+}
 
-                if (url) {
-                    lines.push(`- **[${name}](${url})** on ${platform}`);
-                } else {
-                    lines.push(`- **${name}** on ${platform}`);
-                }
-                if (skill) lines.push(`  - Addresses: ${skill}`);
-                if (reasoning) lines.push(`  - ${reasoning}`);
-            }
-            lines.push("");
-        }
+export function format_multi_analysis(jd_docs, resume_docs, rankedResults) {
+    const lines = [];
+    lines.push('CareerLens AI Multi-Match Analysis');
+    lines.push(`JD count: ${jd_docs.length}; Resume count: ${resume_docs.length}`);
+    lines.push('');
 
-        if (unverified.length > 0) {
-            lines.push(`### ⚠️ Suggested (URL not verified — search links provided)`);
-            for (const course of unverified) {
-                const name = course.course_name || "Unknown Course";
-                const platform = course.platform || "Unknown";
-                const search_url = course.search_url || course.url || "";
-                const skill = course.skill || "";
-
-                if (search_url) {
-                    lines.push(`- **${name}** on ${platform} — [Search →](${search_url})`);
-                } else {
-                    lines.push(`- **${name}** on ${platform}`);
-                }
-                if (skill) lines.push(`  - Addresses: ${skill}`);
-            }
-            lines.push("");
-        }
+    if (rankedResults && rankedResults.length > 0) {
+        const top = rankedResults[0];
+        lines.push(`Best match: ${top.resume.filename} for ${top.jd.filename} - ${top.result.overall_score}/100`);
+        lines.push(`Best return path: ${top.result.return_path || 'Strong fit for this role.'}`);
+        lines.push('');
     }
 
-    lines.push(`---\n*Note: This is an AI-estimated compatibility score, not an actual employer ATS score.*`);
+    for (const item of rankedResults.slice(0, 5)) {
+        lines.push(`${item.resume.filename} vs ${item.jd.filename}: ${item.result.overall_score}/100`);
+    }
+
     return lines.join('\n');
 }

@@ -3,6 +3,7 @@ import { message } from 'telegraf/filters';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import https from 'https';
 import axios from 'axios';
 import { LLMClient, clear_extraction_cache } from './llm.js';
 import { MatchingEngine } from './matcher.js';
@@ -14,11 +15,19 @@ dotenv.config();
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 if (!token) {
-    console.error("❌ TELEGRAM_BOT_TOKEN not found in environment.");
+    console.error("TELEGRAM_BOT_TOKEN not found in environment.");
     process.exit(1);
 }
 
-const bot = new Telegraf(token);
+const bot = new Telegraf(token, {
+    telegram: {
+        agent: new https.Agent({
+            family: 4,
+            keepAlive: true,
+            keepAliveMsecs: 10000,
+        }),
+    },
+});
 const llm = new LLMClient();
 const engine = new MatchingEngine(llm);
 
@@ -37,7 +46,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 bot.start((ctx) => {
     ctx.reply(
-        "👋 Welcome to CareerLens AI!\n\n" +
+        "Welcome to CareerLens AI!\n\n" +
         "I can analyze your resume against a job description to give you an honest compatibility score, explain the gaps, and suggest courses.\n\n" +
         "To start, simply upload a Resume and a Job Description (.pdf, .docx, or .txt). Use /help for more info."
     );
@@ -45,20 +54,20 @@ bot.start((ctx) => {
 
 bot.help((ctx) => {
     ctx.reply(
-        "📋 **Commands**\n" +
+        "Commands\n" +
         "/analyze - Run analysis on the currently uploaded JD and Resume.\n" +
         "/clear - Clear your uploaded documents and reset your session.\n" +
         "/start - Show welcome message.\n\n" +
-        "**How to use:**\n" +
+        "How to use:\n" +
         "Just upload two documents. I will automatically classify them and run the analysis once both a JD and Resume are provided."
-    , { parse_mode: 'Markdown' });
+    );
 });
 
 bot.command('clear', (ctx) => {
     const session = getSession(ctx.chat.id);
     session.clear();
     // Do not clear the global extraction cache for all users, only this user's state
-    ctx.reply("🗑️ Your session and uploaded documents have been cleared.");
+    ctx.reply("Your session and uploaded documents have been cleared.");
 });
 
 bot.command('analyze', async (ctx) => {
@@ -69,7 +78,7 @@ bot.command('analyze', async (ctx) => {
     const resume = docs.find(d => d.doc_type === 'resume');
 
     if (!jd || !resume) {
-        return ctx.reply("⚠️ I need both a Job Description and a Resume to run the analysis. Please upload the missing document.");
+        return ctx.reply("I need both a Job Description and a Resume to run the analysis. Please upload the missing document.");
     }
 
     await runAnalysis(ctx, session, jd, resume);
@@ -80,15 +89,15 @@ bot.on(message('document'), async (ctx) => {
     
     // Explicit file size limit check before downloading
     if (doc.file_size > MAX_FILE_SIZE) {
-        return ctx.reply("❌ File too large.\n\nPlease upload a document under 5MB.");
+        return ctx.reply("File too large.\n\nPlease upload a document under 5MB.");
     }
 
     const ext = path.extname(doc.file_name || "").toLowerCase();
     if (!SUPPORTED_EXTENSIONS.includes(ext)) {
-        return ctx.reply(`❌ Unsupported file type. Supported types: ${SUPPORTED_EXTENSIONS.join(', ')}`);
+        return ctx.reply(`Unsupported file type. Supported types: ${SUPPORTED_EXTENSIONS.join(', ')}`);
     }
 
-    const progressMsg = await ctx.reply(`⏳ Downloading and reading ${doc.file_name}...`);
+    const progressMsg = await ctx.reply(`Downloading and reading ${doc.file_name}...`);
 
     try {
         const fileLink = await ctx.telegram.getFileLink(doc.file_id);
@@ -106,15 +115,15 @@ bot.on(message('document'), async (ctx) => {
         fs.unlinkSync(tempPath); // cleanup
 
         if (!text || text.trim().length === 0) {
-            return ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, "⚠️ Could not extract text from this document.");
+            return ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, "Could not extract text from this document.");
         }
 
-        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `⏳ Classifying ${doc.file_name}...`);
+        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `Classifying ${doc.file_name}...`);
 
         // Classify
         const classification = await llm.classify(text, doc.file_name);
         if (classification.doc_type === 'ambiguous') {
-            return ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `❓ I couldn't determine if ${doc.file_name} is a Resume or a JD.\n\nPlease ensure it contains clear keywords.`);
+            return ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `I couldn't determine if ${doc.file_name} is a Resume or a JD.\n\nPlease ensure it contains clear keywords.`);
         }
 
         const session = getSession(ctx.chat.id);
@@ -129,7 +138,7 @@ bot.on(message('document'), async (ctx) => {
         const newDoc = session.add_document(doc.file_id, doc.file_name, text, classification.doc_type);
 
         const typeName = classification.doc_type === 'job_description' ? 'Job Description' : 'Resume';
-        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `✅ Successfully loaded ${doc.file_name} as a ${typeName}.`);
+        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `Successfully loaded ${doc.file_name} as a ${typeName}.`);
 
         // Auto-trigger analysis if both are present
         const docs = Array.from(session.documents.values());
@@ -140,7 +149,7 @@ bot.on(message('document'), async (ctx) => {
             await runAnalysis(ctx, session, jd, resume);
         } else {
             const missingType = jd ? "Resume" : "Job Description";
-            await ctx.reply(`👉 Now, please upload a **${missingType}** (or paste the text directly here) to begin the compatibility analysis!`, { parse_mode: 'Markdown' });
+            await ctx.reply(`Now, please upload a ${missingType} (or paste the text directly here) to begin the compatibility analysis.`);
         }
 
     } catch (err) {
@@ -157,12 +166,12 @@ bot.on(message('text'), async (ctx) => {
         return ctx.reply("Please provide a longer text or upload a document (.pdf, .docx, .txt).");
     }
 
-    const progressMsg = await ctx.reply("⏳ Classifying pasted text...");
+    const progressMsg = await ctx.reply("Classifying pasted text...");
 
     try {
         const classification = await llm.classify(text, "pasted_text.txt");
         if (classification.doc_type === 'ambiguous') {
-            return ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `❓ I couldn't determine if the pasted text is a Resume or a JD.\n\nPlease ensure it contains clear keywords.`);
+            return ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `I couldn't determine if the pasted text is a Resume or a JD.\n\nPlease ensure it contains clear keywords.`);
         }
 
         const session = getSession(ctx.chat.id);
@@ -176,7 +185,7 @@ bot.on(message('text'), async (ctx) => {
         const newDoc = session.add_document(null, "Pasted Text", text, classification.doc_type);
 
         const typeName = classification.doc_type === 'job_description' ? 'Job Description' : 'Resume';
-        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `✅ Successfully loaded pasted text as a ${typeName}.`);
+        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `Successfully loaded pasted text as a ${typeName}.`);
 
         const docs = Array.from(session.documents.values());
         const jd = docs.find(d => d.doc_type === 'job_description');
@@ -186,7 +195,7 @@ bot.on(message('text'), async (ctx) => {
             await runAnalysis(ctx, session, jd, resume);
         } else {
             const missingType = jd ? "Resume" : "Job Description";
-            await ctx.reply(`👉 Now, please upload a ${missingType} (or paste the text directly here) to begin the compatibility analysis!`);
+            await ctx.reply(`Now, please upload a ${missingType} (or paste the text directly here) to begin the compatibility analysis.`);
         }
 
     } catch (err) {
@@ -196,30 +205,17 @@ bot.on(message('text'), async (ctx) => {
 });
 
 async function runAnalysis(ctx, session, jd, resume) {
-    const progressMsg = await ctx.reply("⚙️ Running AI Match Analysis. This will take a moment...");
+    const progressMsg = await ctx.reply("Running AI match analysis. This will take a moment...");
     try {
         const result = await engine.analyze_pair(jd, resume);
-        let markdownOutput = format_single_analysis(jd, resume, result);
-        
-        // Telegram MarkdownV2 requires heavy escaping.
-        // It's safer to use normal Markdown or just send as HTML if formatting breaks.
-        // The output formatter produces standard markdown. We will send it as plain text if it's too complex, 
-        // but let's try standard Markdown first, falling back to plain if it errors.
-        
-        // Telegram has a 4096 character limit per message. Split if necessary.
-        const chunks = splitTextByLength(markdownOutput, 4000);
-        
+        const plainOutput = sanitizeTelegramText(format_single_analysis(jd, resume, result));
+
+        const chunks = splitTextByLength(plainOutput, 4000);
+
         await ctx.telegram.deleteMessage(ctx.chat.id, progressMsg.message_id).catch(() => {});
-        
+
         for (const chunk of chunks) {
-            // Telegraf uses Markdown by default if specified, but format_single_analysis uses standard Markdown which is mostly compatible.
-            // We won't strictly enforce parse_mode if it fails.
-            try {
-                await ctx.reply(chunk, { parse_mode: 'Markdown' });
-            } catch (e) {
-                // Fallback without parse_mode if formatting fails (e.g. unclosed tags)
-                await ctx.reply(chunk);
-            }
+            await ctx.reply(chunk);
         }
 
     } catch (err) {
@@ -231,14 +227,41 @@ async function runAnalysis(ctx, session, jd, resume) {
 function handleRateLimitError(ctx, err, messageIdToEdit = null) {
     const isRateLimit = err.status === 429 || (err.message && err.message.includes('429'));
     const msg = isRateLimit 
-        ? "⏳ I'm handling a lot of requests right now. Please try again in a minute."
-        : "❌ An error occurred while processing your request.";
+        ? "I'm handling a lot of requests right now. Please try again in a minute."
+        : "An error occurred while processing your request.";
         
     if (messageIdToEdit) {
         ctx.telegram.editMessageText(ctx.chat.id, messageIdToEdit, null, msg).catch(() => ctx.reply(msg));
     } else {
         ctx.reply(msg);
     }
+}
+
+function sanitizeTelegramText(text) {
+    if (!text) return '';
+
+    let sanitized = String(text)
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/__(.+?)__/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/_(.+?)_/g, '$1')
+        .replace(/^#+\s*/gm, '')
+        .replace(/^>\s*/gm, '')
+        .replace(/^[-*•]\s*/gm, '')
+        .replace(/^\d+\.\s*/gm, '')
+        .replace(/\[(.*?)\]\((https?:\/\/[^\s)]+)\)/g, '$1')
+        .replace(/\|/g, ' ')
+        .replace(/---+/g, '');
+
+    sanitized = sanitized
+        .replace(/\r/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    return sanitized;
 }
 
 function splitTextByLength(text, maxLength) {
@@ -260,5 +283,5 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 export function startBot() {
     bot.launch();
-    console.log("🤖 Telegram Bot is running...");
+    console.log("Telegram Bot is running...");
 }
