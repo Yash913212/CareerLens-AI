@@ -1,0 +1,36 @@
+Senior Software Engineer — Backend Systems
+Company: TechScale Solutions
+Location: San Francisco, CA (Hybrid)
+Type: Full-time
+
+About the Role:
+We are looking for a Senior Software Engineer to join our backend platform team. You will design and build scalable microservices, mentor junior engineers, and drive technical architecture decisions.
+
+Responsibilities:
+- Design, develop, and maintain high-performance backend services using Python and Go
+- Build and optimize RESTful APIs and GraphQL endpoints
+- Architect and implement microservices using Kubernetes and Docker
+- Design and optimize PostgreSQL and Redis data stores
+- Implement CI/CD pipelines using GitHub Actions and ArgoCD
+- Lead code reviews and mentor junior team members
+- Collaborate with product and frontend teams to define API contracts
+- Monitor and improve system reliability (99.9% uptime target)
+- Write comprehensive unit and integration tests
+
+Required Skills:
+- 5+ years of backend development experience
+- Strong proficiency in Python and at least one other backend language (Go preferred)
+- Deep experience with PostgreSQL and database optimization
+- Hands-on experience with Kubernetes and containerization
+- Experience designing and building RESTful APIs at scale
+- Familiarity with message queues (Kafka, RabbitMQ)
+- Strong understanding of distributed systems principles
+- Experience with CI/CD pipelines and DevOps practices
+- Bachelor's degree in Computer Science or equivalent experience
+
+Preferred Skills:
+- Experience with Go programming language
+- Knowledge of GraphQL
+- Experience with Redis caching strategies
+- Contributions to open-source projects
+- Experience with observability tools (Datadog, Prometheus, Grafana)

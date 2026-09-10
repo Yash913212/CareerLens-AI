@@ -1,0 +1,37 @@
+Senior Mechanical Engineer — Product Design
+Company: Precision Manufacturing Corp
+Location: Detroit, MI
+Type: Full-time
+
+About the Role:
+We are seeking a Senior Mechanical Engineer to lead our product design and prototyping team. You will design mechanical systems, run FEA simulations, and oversee manufacturing processes.
+
+Responsibilities:
+- Design mechanical components and assemblies using SolidWorks and CATIA
+- Perform Finite Element Analysis (FEA) and Computational Fluid Dynamics (CFD) simulations
+- Create detailed engineering drawings with GD&T specifications
+- Lead design reviews and DFMEA/PFMEA processes
+- Select materials based on strength, weight, and cost requirements
+- Coordinate with manufacturing team on CNC machining, injection molding, and 3D printing
+- Develop and execute test plans for mechanical validation
+- Manage relationships with component suppliers
+- Mentor junior mechanical engineers
+- Ensure compliance with ASME, ISO, and industry-specific standards
+
+Required Skills:
+- 7+ years of mechanical design experience in manufacturing
+- Expert proficiency in SolidWorks or CATIA V5
+- Strong experience with FEA tools (ANSYS, Abaqus, or SolidWorks Simulation)
+- Deep knowledge of GD&T (ASME Y14.5)
+- Experience with CNC machining and injection molding processes
+- Strong understanding of materials science (metals, polymers, composites)
+- Experience with product lifecycle management (PLM) systems
+- Professional Engineer (PE) license preferred
+- Bachelor's or Master's degree in Mechanical Engineering
+
+Preferred Skills:
+- CFD simulation experience
+- Knowledge of additive manufacturing / 3D printing
+- Six Sigma certification (Green or Black Belt)
+- Experience with DFMEA/PFMEA methodologies
+- Patent authorship experience

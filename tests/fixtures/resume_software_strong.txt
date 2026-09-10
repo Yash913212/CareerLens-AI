@@ -1,0 +1,47 @@
+ALEX CHEN
+Senior Software Engineer
+alex.chen@email.com | (555) 123-4567 | San Francisco, CA
+LinkedIn: linkedin.com/in/alexchen | GitHub: github.com/alexchen
+
+PROFESSIONAL SUMMARY
+Senior Software Engineer with 6+ years of experience building scalable backend systems. Proven track record in designing microservices architectures, optimizing database performance, and leading engineering teams. Passionate about clean code, system reliability, and continuous improvement.
+
+EXPERIENCE
+
+Senior Software Engineer — CloudNative Corp | Jan 2021 – Present
+- Designed and built a microservices platform serving 10M+ daily API requests using Python and Go
+- Architected a PostgreSQL sharding strategy that reduced query latency by 60%
+- Built and maintained CI/CD pipelines using GitHub Actions, reducing deployment time by 40%
+- Implemented Redis caching layer that improved API response times by 3x
+- Led code reviews for a team of 8 engineers, improving code quality metrics by 25%
+- Deployed services on Kubernetes clusters across 3 AWS regions
+- Designed event-driven architecture using Apache Kafka for real-time data processing
+
+Software Engineer — StartupGrid Inc | Jun 2018 – Dec 2020
+- Developed RESTful APIs in Python (Flask/FastAPI) serving 2M+ daily requests
+- Built database schemas and optimized complex PostgreSQL queries
+- Implemented Docker containerization for all backend services
+- Set up monitoring and alerting using Prometheus and Grafana
+- Collaborated with frontend team to define and maintain API contracts
+- Wrote comprehensive unit tests achieving 90%+ code coverage
+
+Junior Developer — WebTech Solutions | Aug 2017 – May 2018
+- Built backend features for e-commerce platform using Python Django
+- Implemented database migrations and data model updates
+- Participated in agile ceremonies and sprint planning
+
+EDUCATION
+Bachelor of Science in Computer Science — UC Berkeley | 2017
+Relevant coursework: Distributed Systems, Database Systems, Algorithms
+
+SKILLS
+Languages: Python (expert), Go (proficient), JavaScript (working knowledge)
+Databases: PostgreSQL (expert), Redis, MongoDB
+Infrastructure: Kubernetes, Docker, AWS (EC2, ECS, RDS, S3), Terraform
+Tools: Git, GitHub Actions, ArgoCD, Datadog, Prometheus, Grafana
+Frameworks: FastAPI, Flask, gRPC, Django
+Other: Apache Kafka, RabbitMQ, GraphQL, REST API design
+
+CERTIFICATIONS
+- AWS Solutions Architect – Associate
+- Certified Kubernetes Application Developer (CKAD)

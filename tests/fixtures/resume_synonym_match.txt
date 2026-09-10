@@ -1,0 +1,42 @@
+RILEY JOHNSON
+Data & Backend Engineer
+riley.johnson@email.com | (555) 777-8888 | Remote
+
+PROFESSIONAL SUMMARY
+Data-focused backend engineer with 4 years of experience building data pipelines and backend services. Strong foundation in relational databases, statistical analysis, and Python development.
+
+EXPERIENCE
+
+Data Engineer — DataFlow Systems | Mar 2021 – Present
+- Built ETL data pipelines processing 50M+ records daily using Python and Apache Airflow
+- Designed and managed relational database schemas (experience with multiple RDBMS platforms)
+- Developed REST APIs in Python for internal data access
+- Implemented data quality monitoring and alerting
+- Worked with cloud infrastructure on AWS (S3, EC2, RDS)
+- Created data visualizations and dashboards using Plotly and Dash
+
+Backend Developer — AppWorks Inc | Jul 2019 – Feb 2021
+- Built backend services using Python Flask
+- Managed application databases using relational database systems
+- Wrote SQL queries for data analysis and reporting
+- Implemented automated testing with pytest
+- Deployed applications using Docker containers
+
+EDUCATION
+Bachelor of Science in Mathematics — Stanford University | 2019
+Minor in Computer Science
+Relevant coursework: Linear Algebra, Probability & Statistics, Machine Learning, Algorithms
+
+PROJECTS
+Sentiment Analysis Tool (Personal)
+- Built a text classification model using scikit-learn and NLTK
+- Trained on 100K+ labeled reviews with 87% accuracy
+- Deployed as a REST API using FastAPI
+
+SKILLS
+Languages: Python (proficient), SQL (proficient), R (basic)
+Data: pandas, NumPy, scikit-learn, Apache Airflow, Apache Spark (basic)
+Databases: Extensive experience with relational database management systems
+Cloud: AWS (S3, EC2, RDS, Lambda)
+Tools: Docker, Git, Jupyter Notebooks, Plotly
+Statistics: Hypothesis testing, regression analysis, A/B testing fundamentals

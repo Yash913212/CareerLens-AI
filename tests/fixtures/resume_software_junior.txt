@@ -1,0 +1,40 @@
+JAMIE PATEL
+Junior Software Developer
+jamie.patel@email.com | (555) 987-6543 | Austin, TX
+
+OBJECTIVE
+Recent computer science graduate seeking an entry-level software development role. Eager to learn and grow in a collaborative team environment.
+
+EXPERIENCE
+
+Software Development Intern — TechStart Labs | Jun 2023 – Aug 2023
+- Assisted in developing features for a web application using Python and Flask
+- Wrote unit tests for existing API endpoints
+- Fixed bugs reported in the issue tracker
+- Participated in daily stand-up meetings
+
+EDUCATION
+Bachelor of Science in Computer Science — University of Texas at Austin | 2023
+GPA: 3.4/4.0
+Relevant coursework: Data Structures, Algorithms, Web Development, Databases
+
+PROJECTS
+Personal Blog Platform (Academic Project)
+- Built a simple blog web app using Python Flask and SQLite
+- Implemented user authentication and CRUD operations
+- Deployed on Heroku
+
+Todo List API (Personal Project)
+- Created a REST API using FastAPI
+- Used PostgreSQL for data storage
+- Wrote basic unit tests with pytest
+
+SKILLS
+Languages: Python (intermediate), JavaScript (basic), HTML/CSS
+Databases: SQLite, basic PostgreSQL
+Tools: Git, VS Code
+Frameworks: Flask, basic FastAPI knowledge
+
+ACTIVITIES
+- Member, UT Austin Computer Science Society
+- Volunteer tutor for introductory programming courses

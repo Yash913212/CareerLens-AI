@@ -1,0 +1,34 @@
+Data Scientist — Machine Learning Platform
+Company: DataVerse Analytics
+Location: New York, NY (Remote-friendly)
+Type: Full-time
+
+About the Role:
+We are hiring a Data Scientist to join our ML Platform team. You will build production-grade machine learning models, design experiments, and translate business problems into data-driven solutions.
+
+Responsibilities:
+- Develop and deploy machine learning models for production use cases
+- Design and implement A/B testing frameworks and experimental designs
+- Build data pipelines using Apache Spark and Airflow
+- Create dashboards and visualizations for stakeholder communication
+- Perform statistical analysis and hypothesis testing
+- Collaborate with engineering teams to deploy models via REST APIs
+- Write clean, well-documented Python code for model development
+- Conduct exploratory data analysis on large-scale datasets
+
+Required Skills:
+- 3+ years of experience in data science or machine learning
+- Strong proficiency in Python (pandas, NumPy, scikit-learn)
+- Experience with deep learning frameworks (PyTorch or TensorFlow)
+- Strong foundation in statistics and probability
+- Experience with SQL and relational databases
+- Experience with cloud platforms (AWS or GCP)
+- Knowledge of ML model deployment and serving (MLflow, SageMaker, or similar)
+- Bachelor's or Master's degree in Computer Science, Statistics, or related field
+
+Preferred Skills:
+- Experience with Apache Spark and distributed computing
+- Knowledge of NLP or computer vision
+- Experience with experiment tracking (MLflow, Weights & Biases)
+- Familiarity with Docker and Kubernetes
+- Published research or Kaggle competition experience
