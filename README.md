@@ -2,7 +2,7 @@
 
 CareerLens AI is an intelligent Telegram Bot that analyzes a candidate's Resume against a specific Job Description (JD). It provides a deterministic compatibility score, explains skill gaps, recommends actionable return paths, and suggests real courses for missing skills.
 
-The project is built on Node.js and uses OpenRouter's AI models for deep semantic analysis and document classification.
+The project is built on Node.js and uses Google's Gemini AI models for deep semantic analysis and document classification.
 
 ## Features
 
@@ -21,7 +21,7 @@ The project is built on Node.js and uses OpenRouter's AI models for deep semanti
 - **Runtime:** Node.js (ES Modules)
 - **Server:** Express.js (handles multipart/form-data)
 - **Telegram Bot API:** Telegraf
-- **AI Integration:** OpenRouter (via direct Axios HTTP calls)
+- **AI Integration:** Gemini API (via direct Axios HTTP calls to OpenAI compatibility endpoint)
 - **Parsing:** `pdf-parse` (v2.x) for PDFs, `mammoth` for DOCX
 
 ## Installation & Setup
@@ -35,7 +35,7 @@ The project is built on Node.js and uses OpenRouter's AI models for deep semanti
    Create a `.env` file in the root directory (you can copy `.env.example`) and add your API keys:
    ```env
    TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
    ```
 
 3. **Start the Bot:**

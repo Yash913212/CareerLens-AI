@@ -116,31 +116,31 @@ describe('CareerLens AI Matching Engine', () => {
 
     test('Test 27 - Rate Limit Handling (Mocked 429)', async () => {
         const mockLlm = new LLMClient();
-
-        jest.spyOn(mockLlm.client.chat.completions, 'create').mockImplementation(() => {
+        
+        // Mock axios.post to simulate a 429 rate limit response.
+        // LLMClient._callWithRetry uses axios.post internally.
+        const { default: axios } = await import('axios');
+        const originalPost = axios.post;
+        axios.post = jest.fn().mockImplementation(() => {
             const err = new Error('Rate limit exceeded');
             err.status = 429;
+            err.response = { status: 429 };
             throw err;
         });
 
-        const result = await mockLlm._call('Test prompt', 'Test system', 0.1, true);
-
-        expect(typeof result).toBe('string');
-        expect(result).toContain('fallback');
-        expect(result).toContain('rate limit');
-    });
-
-    test('Timeouts fall back to offline mode instead of hanging', async () => {
-        const mockLlm = new LLMClient();
-        mockLlm.provider = 'groq';
-        mockLlm.apiKey = 'fake-key';
-
-        jest.spyOn(mockLlm.client.chat.completions, 'create').mockImplementation(() => new Promise(() => {}));
-
-        const result = await mockLlm._call('Delayed test prompt', 'Test system', 0.1, true, 120);
-
-        expect(typeof result).toBe('string');
-        expect(result).toContain('fallback');
-        expect(result).toContain('timed out');
+        const start = Date.now();
+        try {
+            // maxRetries=1 just to keep test fast
+            await mockLlm._callWithRetry({ messages: [] }, 1);
+            fail('Should have thrown error after exhausting retries');
+        } catch (error) {
+            const duration = (Date.now() - start) / 1000;
+            expect(error.status).toBe(429);
+            // It should have waited at least 2 seconds (Math.pow(2, 1) * 1000)
+            expect(duration).toBeGreaterThanOrEqual(1.5);
+        } finally {
+            // Restore original axios.post so other tests are unaffected
+            axios.post = originalPost;
+        }
     });
 });

@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { LLMClient } from './llm.js';
 
 export class Document {
     constructor(id, filename, text, doc_type) {

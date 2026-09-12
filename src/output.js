@@ -1,89 +1,208 @@
 export function format_single_analysis(jd_doc, resume_doc, result) {
     const lines = [];
 
-    const skillLabel = result.domain_compatibility === 'mismatch'
-        ? 'Weak fit'
-        : result.domain_compatibility === 'partial'
-            ? 'Partial fit'
-            : 'Strong fit';
+    // Header
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`🎯 CAREERLENS AI`);
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
+    lines.push(`📄 JD: ${result.job?.title || jd_doc.filename}`);
+    lines.push(`👤 Resume: ${result.candidate?.name || resume_doc.filename}`);
+    lines.push("");
 
-    lines.push('Resume vs JD Analysis');
-    lines.push(`ATS Score: ${result.overall_score}/100`);
-    lines.push(`Skill Match: ${skillLabel}`);
-    lines.push(`Return Path: ${result.return_path || 'No clear path provided.'}`);
+    // Scores
+    lines.push(`📊 SCORES`);
+    lines.push("");
+    lines.push(`🤖 ATS Score: ${result.scores?.atsScore || 0}/100`);
+    lines.push(`🎯 Job Match: ${result.scores?.jobMatchScore || 0}/100`);
+    lines.push(`📌 Shortlist Outlook: ${result.scores?.shortlistOutlook || "UNKNOWN"}`);
+    lines.push(`🔎 Confidence: ${result.scores?.confidence || "HIGH"}`);
+    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
+
+    // Domain Fit
+    lines.push(`🧩 DOMAIN FIT`);
+    lines.push("");
+    
+    let domainIcon = "✅";
+    if (result.domainAssessment?.status === "MISMATCH") domainIcon = "❌";
+    else if (result.domainAssessment?.status === "PARTIAL") domainIcon = "⚠️";
+    
+    lines.push(`${domainIcon} ${result.job?.domain || "Domain"} — ${result.domainAssessment?.status || "UNKNOWN"}`);
+    lines.push("");
+    lines.push(`Reason:`);
+    lines.push(result.domainAssessment?.reason || "No domain reasoning provided.");
+    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
+
+    // ATS Analysis
+    lines.push(`🤖 ATS ANALYSIS`);
+    lines.push("");
+    lines.push(`Matched Keywords`);
+    const matched = result.requiredSkills?.matched || [];
+    if (matched.length > 0) {
+        matched.forEach(k => lines.push(`✅ ${k}`));
+    } else {
+        lines.push(`None identified.`);
+    }
     lines.push('');
 
-    lines.push('Enlightenment:');
-    lines.push(result.enlightenment || 'No explanation provided.');
-    lines.push('');
-
-    lines.push('What the resume does well:');
-    const strengths = Array.isArray(result.strengths) && result.strengths.length > 0
-        ? result.strengths.slice(0, 4)
-        : ['Relevant experience and domain signal are present.'];
-    lines.push(...strengths.map(item => `- ${item}`));
-    lines.push('');
-
-    lines.push('What is missing:');
-    const missing = [
-        ...(Array.isArray(result.missing_critical) ? result.missing_critical : []).map(item => `${typeof item === 'object' ? item.skill : item} - Critical`),
-        ...(Array.isArray(result.missing_important) ? result.missing_important : []).map(item => `${typeof item === 'object' ? item.skill : item} - Important`),
-        ...(Array.isArray(result.missing_optional) ? result.missing_optional : []).map(item => `${typeof item === 'object' ? item.skill : item} - Optional`)
-    ];
+    lines.push(`Missing JD Keywords`);
+    const missing = result.requiredSkills?.missing || [];
     if (missing.length > 0) {
-        lines.push(...missing.slice(0, 8));
+        missing.forEach(k => lines.push(`❌ ${k}`));
     } else {
-        lines.push('No major gaps identified.');
+        lines.push(`None identified.`);
     }
-    lines.push('');
+    lines.push("");
 
-    lines.push('What you have to do:');
-    const actionText = result.action_plan || 'No action plan provided.';
-    lines.push(actionText);
-    lines.push('');
-
-    lines.push('Recommended courses:');
-    if (Array.isArray(result.course_recommendations) && result.course_recommendations.length > 0) {
-        for (const course of result.course_recommendations.slice(0, 4)) {
-            const name = course.course_name || 'Course';
-            const platform = course.platform || 'Platform';
-            const reason = course.reasoning ? ` - ${course.reasoning}` : '';
-            lines.push(`- ${name} (${platform})${reason}`);
-        }
+    lines.push(`ATS Problems`);
+    if (result.atsIssues && result.atsIssues.length > 0) {
+        result.atsIssues.forEach(issue => {
+            let icon = "🟡";
+            if (issue.priority === "CRITICAL") icon = "🔴";
+            else if (issue.priority === "IMPORTANT") icon = "🟠";
+            lines.push(`${icon} ${issue.problem}`);
+        });
     } else {
-        lines.push('No course recommendations for this profile at the moment.');
+        lines.push(`No major ATS problems identified.`);
     }
-    lines.push('');
+    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
 
-    lines.push('Score breakdown:');
-    lines.push(`Required Skills: ${result.required_skills_score}/100`);
-    lines.push(`Experience: ${result.experience_score}/100`);
-    lines.push(`Domain Alignment: ${result.domain_alignment_score}/100`);
-    lines.push(`Seniority: ${result.seniority_score}/100`);
-    lines.push(`Education & Certs: ${result.education_score}/100`);
-    lines.push(`Projects: ${result.projects_score}/100`);
-    lines.push('');
-    lines.push('This is an AI-estimated compatibility score, not an actual employer ATS score.');
+    // Job Match
+    lines.push(`🎯 JOB MATCH`);
+    lines.push("");
+    lines.push(`Required Skills`);
+    matched.forEach(k => lines.push(`✅ ${k}`));
+    const partial = result.requiredSkills?.partial || [];
+    partial.forEach(k => lines.push(`⚠️ ${k}`));
+    missing.forEach(k => lines.push(`❌ ${k}`));
+    lines.push("");
 
-    return lines.join('\n');
-}
+    lines.push(`Experience`);
+    lines.push(`JD requires: ${result.experienceAnalysis?.required || "Unknown"}`);
+    lines.push(`Resume demonstrates: ${result.experienceAnalysis?.candidate || "Unknown"}`);
+    lines.push("");
+    let expIcon = "✅";
+    if (result.experienceAnalysis?.professionalExperienceMatch === "MISMATCH") expIcon = "❌";
+    else if (result.experienceAnalysis?.professionalExperienceMatch === "PARTIAL") expIcon = "⚠️";
+    lines.push(`Status: ${expIcon} ${result.experienceAnalysis?.professionalExperienceMatch || "UNKNOWN"}`);
+    lines.push("");
 
-export function format_multi_analysis(jd_docs, resume_docs, rankedResults) {
-    const lines = [];
-    lines.push('CareerLens AI Multi-Match Analysis');
-    lines.push(`JD count: ${jd_docs.length}; Resume count: ${resume_docs.length}`);
-    lines.push('');
+    lines.push(`Seniority`);
+    let senIcon = "✅";
+    if (result.job?.seniority && result.candidate?.professionalExperienceYears < 2 && result.job.seniority.toLowerCase().includes("senior")) senIcon = "❌";
+    lines.push(`Status: ${senIcon} ALIGNED`); // Simplified for template, could be dynamic based on JSON
+    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
 
-    if (rankedResults && rankedResults.length > 0) {
-        const top = rankedResults[0];
-        lines.push(`Best match: ${top.resume.filename} for ${top.jd.filename} - ${top.result.overall_score}/100`);
-        lines.push(`Best return path: ${top.result.return_path || 'Strong fit for this role.'}`);
-        lines.push('');
+    // Critical Gaps
+    if (result.qualificationGaps && result.qualificationGaps.length > 0) {
+        lines.push(`🔴 CRITICAL GAPS`);
+        lines.push("");
+        result.qualificationGaps.forEach((gap, index) => {
+            const numEmoji = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"][index] || "•";
+            lines.push(`${numEmoji} ${gap.gap}. ${gap.whyItMatters}`);
+            lines.push("");
+        });
+        lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+        lines.push("");
     }
 
-    for (const item of rankedResults.slice(0, 5)) {
-        lines.push(`${item.resume.filename} vs ${item.jd.filename}: ${item.result.overall_score}/100`);
+    // ATS Improvements
+    if (result.resumeImprovements && result.resumeImprovements.length > 0) {
+        lines.push(`✏️ ATS IMPROVEMENTS`);
+        lines.push("");
+        result.resumeImprovements.forEach((imp, index) => {
+            const numEmoji = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"][index] || "•";
+            lines.push(`${numEmoji} ${imp.recommendation}`);
+            lines.push("");
+        });
+        lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+        lines.push("");
     }
+
+    // What You Should Do
+    lines.push(`🚀 WHAT YOU SHOULD DO`);
+    lines.push("");
+    lines.push(`NOW`);
+    result.resumeImprovements.slice(0, 3).forEach(imp => lines.push(`• ${imp.recommendation}`));
+    lines.push("");
+    lines.push(`NEXT`);
+    result.qualificationGaps.slice(0, 2).forEach(gap => lines.push(`• ${gap.howToImprove}`));
+    lines.push("");
+    if (result.qualificationGaps.length > 2) {
+        lines.push(`LONG TERM`);
+        result.qualificationGaps.slice(2, 4).forEach(gap => lines.push(`• ${gap.howToImprove}`));
+        lines.push("");
+    }
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
+
+    // Recommended Learning
+    if (result.course_recommendations && result.course_recommendations.length > 0) {
+        lines.push(`📚 RECOMMENDED LEARNING`);
+        lines.push("");
+        
+        const verified = result.course_recommendations.filter(c => c.verified);
+        const unverified = result.course_recommendations.filter(c => !c.verified);
+        const coursesToShow = verified.length > 0 ? verified : unverified;
+
+        coursesToShow.forEach((course, index) => {
+            const name = course.course_name || "Unknown Course";
+            const platform = course.platform || "Unknown";
+            const url = course.url || course.search_url || "";
+            const skill = course.skill || "";
+            const reasoning = course.reasoning || "";
+
+            lines.push(`${index + 1}. ${skill}`);
+            lines.push(`Reason: ${reasoning}`);
+            if (url) {
+                lines.push(`Course: [${name}](${url}) on ${platform}`);
+            } else {
+                lines.push(`Course: ${name} on ${platform}`);
+            }
+            lines.push("");
+        });
+        lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+        lines.push("");
+    }
+
+    // Return Path
+    lines.push(`🧭 RETURN PATH`);
+    lines.push("");
+    let pathIcon = "🟡";
+    if (result.returnPath?.decision?.includes("TRANSITION")) pathIcon = "🔄";
+    else if (result.returnPath?.decision?.includes("READY")) pathIcon = "✅";
+    
+    lines.push(`${pathIcon} ${result.returnPath?.decision || "UNKNOWN"}`);
+    lines.push("");
+    lines.push(`Reason:`);
+    lines.push(result.returnPath?.reason || "No reasoning provided.");
+    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
+
+    // Bottom Line
+    lines.push(`💡 BOTTOM LINE`);
+    lines.push("");
+    lines.push(`ATS: ${result.scores?.atsScore || 0}/100`);
+    lines.push(`Actual Job Fit: ${result.scores?.jobMatchScore || 0}/100`);
+    lines.push("");
+    if (result.scores?.jobMatchScore < 50) {
+        lines.push(`The resume might have some matching keywords, but improving keyword alignment alone will not fully solve the qualification gaps.`);
+    } else {
+        lines.push(`The candidate is a solid fit for this role. ATS optimizations will increase visibility.`);
+    }
+    lines.push("");
+    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+    lines.push("");
+    lines.push(`⚠️ CareerLens AI Score is an evidence-based estimate and is not the employer's actual ATS score.`);
 
     return lines.join('\n');
 }

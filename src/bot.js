@@ -19,15 +19,7 @@ if (!token) {
     process.exit(1);
 }
 
-const bot = new Telegraf(token, {
-    telegram: {
-        agent: new https.Agent({
-            family: 4,
-            keepAlive: true,
-            keepAliveMsecs: 10000,
-        }),
-    },
-});
+const bot = new Telegraf(token, { handlerTimeout: 300_000 }); // 5 minute handler timeout
 const llm = new LLMClient();
 const engine = new MatchingEngine(llm);
 
@@ -282,6 +274,6 @@ process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 export function startBot() {
-    bot.launch();
-    console.log("Telegram Bot is running...");
+    bot.launch({ dropPendingUpdates: true });
+    console.log("🤖 Telegram Bot is running... (old queued messages dropped)");
 }
