@@ -46,13 +46,13 @@ bot.start((ctx) => {
 
 bot.help((ctx) => {
     ctx.reply(
-        "Commands\n" +
-        "/analyze - Run analysis on the currently uploaded JD and Resume.\n" +
+        "📋 **Commands**\n" +
+        "/analyze - Run batch analysis on all uploaded JDs and Resumes.\n" +
         "/clear - Clear your uploaded documents and reset your session.\n" +
         "/start - Show welcome message.\n\n" +
-        "How to use:\n" +
-        "Just upload two documents. I will automatically classify them and run the analysis once both a JD and Resume are provided."
-    );
+        "**How to use:**\n" +
+        "Upload one or multiple Resumes and Job Descriptions. When you are ready, type /analyze to compare them all!"
+    , { parse_mode: 'Markdown' });
 });
 
 bot.command('clear', (ctx) => {
@@ -66,14 +66,14 @@ bot.command('analyze', async (ctx) => {
     const session = getSession(ctx.chat.id);
     const docs = Array.from(session.documents.values());
     
-    const jd = docs.find(d => d.doc_type === 'job_description');
-    const resume = docs.find(d => d.doc_type === 'resume');
+    const jds = docs.filter(d => d.doc_type === 'job_description');
+    const resumes = docs.filter(d => d.doc_type === 'resume');
 
-    if (!jd || !resume) {
-        return ctx.reply("I need both a Job Description and a Resume to run the analysis. Please upload the missing document.");
+    if (jds.length === 0 || resumes.length === 0) {
+        return ctx.reply("⚠️ I need at least one Job Description and one Resume to run the batch analysis. Please upload missing documents.");
     }
 
-    await runAnalysis(ctx, session, jd, resume);
+    await runBatchAnalysis(ctx, session, jds, resumes);
 });
 
 bot.on(message('document'), async (ctx) => {
@@ -120,29 +120,18 @@ bot.on(message('document'), async (ctx) => {
 
         const session = getSession(ctx.chat.id);
         
-        // Remove existing document of the same type to allow replacing
-        for (const [id, existingDoc] of session.documents.entries()) {
-            if (existingDoc.doc_type === classification.doc_type) {
-                session.documents.delete(id);
-            }
-        }
-
         const newDoc = session.add_document(doc.file_id, doc.file_name, text, classification.doc_type);
 
         const typeName = classification.doc_type === 'job_description' ? 'Job Description' : 'Resume';
-        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `Successfully loaded ${doc.file_name} as a ${typeName}.`);
-
-        // Auto-trigger analysis if both are present
         const docs = Array.from(session.documents.values());
-        const jd = docs.find(d => d.doc_type === 'job_description');
-        const resume = docs.find(d => d.doc_type === 'resume');
+        const jds = docs.filter(d => d.doc_type === 'job_description');
+        const resumes = docs.filter(d => d.doc_type === 'resume');
 
-        if (jd && resume) {
-            await runAnalysis(ctx, session, jd, resume);
-        } else {
-            const missingType = jd ? "Resume" : "Job Description";
-            await ctx.reply(`Now, please upload a ${missingType} (or paste the text directly here) to begin the compatibility analysis.`);
-        }
+        const summaryText = `✅ Successfully loaded ${doc.file_name} as a ${typeName}.\n\n` +
+                            `Currently tracking: **${resumes.length} Resumes** and **${jds.length} JDs**.\n\n` +
+                            `Upload more documents, or type /analyze to run batch comparison!`;
+
+        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, summaryText, { parse_mode: 'Markdown' });
 
     } catch (err) {
         console.error(err);
@@ -167,28 +156,18 @@ bot.on(message('text'), async (ctx) => {
         }
 
         const session = getSession(ctx.chat.id);
-        
-        for (const [id, existingDoc] of session.documents.entries()) {
-            if (existingDoc.doc_type === classification.doc_type) {
-                session.documents.delete(id);
-            }
-        }
-
         const newDoc = session.add_document(null, "Pasted Text", text, classification.doc_type);
 
         const typeName = classification.doc_type === 'job_description' ? 'Job Description' : 'Resume';
-        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, `Successfully loaded pasted text as a ${typeName}.`);
-
         const docs = Array.from(session.documents.values());
-        const jd = docs.find(d => d.doc_type === 'job_description');
-        const resume = docs.find(d => d.doc_type === 'resume');
+        const jds = docs.filter(d => d.doc_type === 'job_description');
+        const resumes = docs.filter(d => d.doc_type === 'resume');
 
-        if (jd && resume) {
-            await runAnalysis(ctx, session, jd, resume);
-        } else {
-            const missingType = jd ? "Resume" : "Job Description";
-            await ctx.reply(`Now, please upload a ${missingType} (or paste the text directly here) to begin the compatibility analysis.`);
-        }
+        const summaryText = `✅ Successfully loaded pasted text as a ${typeName}.\n\n` +
+                            `Currently tracking: **${resumes.length} Resumes** and **${jds.length} JDs**.\n\n` +
+                            `Upload more documents, or type /analyze to run batch comparison!`;
+
+        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, null, summaryText, { parse_mode: 'Markdown' });
 
     } catch (err) {
         console.error(err);
@@ -196,24 +175,34 @@ bot.on(message('text'), async (ctx) => {
     }
 });
 
-async function runAnalysis(ctx, session, jd, resume) {
-    const progressMsg = await ctx.reply("Running AI match analysis. This will take a moment...");
-    try {
-        const result = await engine.analyze_pair(jd, resume);
-        const plainOutput = sanitizeTelegramText(format_single_analysis(jd, resume, result));
-
-        const chunks = splitTextByLength(plainOutput, 4000);
-
-        await ctx.telegram.deleteMessage(ctx.chat.id, progressMsg.message_id).catch(() => {});
-
-        for (const chunk of chunks) {
-            await ctx.reply(chunk);
+async function runBatchAnalysis(ctx, session, jds, resumes) {
+    const totalPairs = jds.length * resumes.length;
+    let current = 0;
+    
+    await ctx.reply(`⚙️ Starting batch analysis... Comparing ${resumes.length} Resumes against ${jds.length} Job Descriptions (${totalPairs} total comparisons). This will take some time!`);
+    
+    for (const jd of jds) {
+        for (const resume of resumes) {
+            current++;
+            const progressMsg = await ctx.reply(`⏳ [${current}/${totalPairs}] Analyzing Resume (${resume.filename}) vs JD (${jd.filename})...`);
+            
+            try {
+                const result = await engine.analyze_pair(jd, resume);
+                const plainOutput = sanitizeTelegramText(format_single_analysis(jd, resume, result));
+                
+                const chunks = splitTextByLength(plainOutput, 4000);
+                await ctx.telegram.deleteMessage(ctx.chat.id, progressMsg.message_id).catch(() => {});
+                
+                for (const chunk of chunks) {
+                    await ctx.reply(chunk);
+                }
+            } catch (err) {
+                console.error("Batch Analysis Error:", err);
+                handleRateLimitError(ctx, err, progressMsg.message_id);
+            }
         }
-
-    } catch (err) {
-        console.error("Analysis Error:", err);
-        handleRateLimitError(ctx, err, progressMsg.message_id);
     }
+    await ctx.reply(`✅ Batch analysis complete!`);
 }
 
 function handleRateLimitError(ctx, err, messageIdToEdit = null) {
@@ -234,8 +223,8 @@ function sanitizeTelegramText(text) {
 
     let sanitized = String(text)
         .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-        .replace(/```[\s\S]*?```/g, '')
-        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\`\`\`[\s\S]*?\`\`\`/g, '')
+        .replace(/\`([^\`]+)\`/g, '$1')
         .replace(/\*\*(.+?)\*\*/g, '$1')
         .replace(/__(.+?)__/g, '$1')
         .replace(/\*(.+?)\*/g, '$1')
